@@ -5,7 +5,8 @@ import Users from "../models/Users.js";
 export function getUsers(req, res) { 
     Users.find().then(
         (data) => { 
-            res.json(data);
+            res.status(201).json(data);
+            // can change the status code.
         }
     )
 }
