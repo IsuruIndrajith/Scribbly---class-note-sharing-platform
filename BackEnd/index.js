@@ -6,6 +6,7 @@ import usersRouter from "./routes/usersRouter.js";
 import multer from "multer";
 import dotenv from "dotenv";
 import uploadRouter from "./routes/uploadRouter.js";
+import downloadRouter from "./routes/downloadRouter.js";
 
 const app = express();
 
@@ -23,6 +24,9 @@ mongoose.connect("mongodb+srv://admin:12345@cluster0.irpqghg.mongodb.net/?retryW
 app.use("/Register", usersRouter)
 app.use("/api", uploadRouter);
 // /api/upload gen upload kranna
+
+app.use("/api", downloadRouter);
+// /api/download gen download kranna
 
 app.delete("/",
     (req, res) => {
