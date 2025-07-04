@@ -12,8 +12,11 @@
   "description": "",
   "dependencies": {
     "body-parser": "^2.2.0",
+    "cloudinary": "^2.7.0",
+    "dotenv": "^17.0.1",
     "express": "^5.1.0",
     "mongoose": "^8.16.1",
+    "multer": "^2.0.1",
     "nodeman": "^1.1.2"
   }
 }
