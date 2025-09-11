@@ -34,3 +34,10 @@ export function saveUsers(req, res){
     
 
 }
+
+export function deleteUser(req, res) {
+    const id = req.params.id;
+    Users.findByIdAndDelete(id)
+        .then(() => res.status(204).send())
+        .catch((error) => res.status(500).json({ error: error.message }));
+}

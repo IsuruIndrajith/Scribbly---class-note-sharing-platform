@@ -1,25 +1,27 @@
-export function createUser(req, res) { 
+import User from '../models/User.js'
 
-    const user = new User({
-        FirstName: req.body.FirstName,
-        LastName: req.body.LastName, 
-        UserName: req.body.UserName,
-        Email: req.body.Email,
-        Password: req.body.Password,
-        role: req.body.role,
-    })
+// export function createUser(req, res) { 
 
-    user.save().then(
-        () => { 
-            res.json({
-                message : "User created sucessfuly"
-            })
-        }
-    ).catch(
-        () => { 
-            res.json({
-                message: "Failed to create user"
-            })
-        }
-    )
-}
+//     const user = new User({
+//         FirstName: req.body.FirstName,
+//         LastName: req.body.LastName, 
+//         UserName: req.body.UserName,
+//         Email: req.body.Email,
+//         Password: req.body.Password,
+//         role: req.body.role,
+//     })
+
+//     user.save().then(
+//         () => { 
+//             res.json({
+//                 message : "User created sucessfuly"
+//             })
+//         }
+//     ).catch(
+//         () => { 
+//             res.json({
+//                 message: "Failed to create user"
+//             })
+//         }
+//     )
+// }
