@@ -5,7 +5,8 @@ import Users from "../models/Users.js";
 export function getUsers(req, res) { 
     Users.find().then(
         (data) => { 
-            res.json(data);
+            res.status(201).json(data);
+            // can change the status code.
         }
     )
 }
@@ -32,4 +33,11 @@ export function saveUsers(req, res){
     }); 
     
 
+}
+
+export function deleteUser(req, res) {
+    const id = req.params.id;
+    Users.findByIdAndDelete(id)
+        .then(() => res.status(204).send())
+        .catch((error) => res.status(500).json({ error: error.message }));
 }

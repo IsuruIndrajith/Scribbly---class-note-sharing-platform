@@ -2,11 +2,18 @@ import mongoose from "mongoose";
 
 const UserDataSchema = mongoose.Schema(
             {
-                FirstName: String,
-                LastName: String,
-                UserName: String,
-                Email: String,
-                Password: String
+                FirstName: {type: String, required: true},
+                LastName: {type: String, required: true},
+                UserName: {type: String, required: true},
+                Email: {type: String, required: true, unique: true},
+                Password: { type: String, required: true },
+                role: { type: String, required: true, default: "user" },
+                img: {
+                    type: String,
+                    required: true,
+                    default: "https://res.cloudinary.com/dz1qj0x8h/image/upload/v1709301234/DefaultProfileImage.png",
+
+                }
             }
 );
         
