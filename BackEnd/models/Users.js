@@ -1,5 +1,8 @@
+// This connects with the DB
 import mongoose from "mongoose";
 
+// the structure of the data storage
+// model is connecting with the collection inside the database
 const UserDataSchema = mongoose.Schema(
             {
                 FirstName: {type: String, required: true},
