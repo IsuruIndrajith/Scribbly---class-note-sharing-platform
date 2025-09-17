@@ -11,6 +11,7 @@ export function getUsers(req, res) {
     )
 }
 
+// create a user
 export function saveUsers(req, res){
 
     const user = new Users(
@@ -19,12 +20,13 @@ export function saveUsers(req, res){
             LastName: req.body.LastName, 
             UserName: req.body.UserName,
             Email: req.body.Email,
-            Password: req.body.Password
+            Password: req.body.Password,
+            role: req.body.role,
         }
     );
     user.save().then(() => {
         res.json({
-            message: "User data saved successfully.",
+            message: "User created successfully.",
             user: user
         })
     }).catch((error) => {
