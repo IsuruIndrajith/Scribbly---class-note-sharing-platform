@@ -21,7 +21,7 @@ mongoose.connect("mongodb+srv://admin:12345@cluster0.irpqghg.mongodb.net/?retryW
     console.log("Failed to connect to MongoDB database");
 })
 
-// connecting usersRouter
+// connecting to usersRouter
 app.use("/Register", usersRouter)
 
 app.use("/api", uploadRouter);
