@@ -18,6 +18,7 @@ export function saveUsers(req, res){
 
     // hashing the password
     const hashedPassword = bcrypt.hashSync(req.body.Password, 10);
+    // rehashing 10 times
 
     const user = new Users(
         {
@@ -51,4 +52,35 @@ export function deleteUser(req, res) {
         .catch((error) => {
             res.status(500).json({ error: error.message });
         });
+}
+
+export function loginUser(req, res) { 
+    const Email = req.body.Email;
+    const Password_login = req.body.Password;
+
+    Users.findOne({ Email: Email }).then(
+        (user) => {
+            if (user == null) {
+                res.status(404).json({
+                    message: "Login failed. User not found."
+                })
+            } else { 
+                const isPasswordCorrect = bcrypt.compareSync(Password_login, user.Password);
+                if (isPasswordCorrect) {
+                    res.status(200).json({
+                        message: "Login successful.",
+                        user: user
+                    });
+                } else {
+                    res.status(401).json({
+                        message: "Login failed. Incorrect password."
+                    });
+                }
+
+            }
+            
+    }
+        
+    )
+
 }
