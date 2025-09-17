@@ -1,5 +1,7 @@
 import Users from "../models/Users.js";
 // Functions of user controller
+import bcrypt from "bcrypt";
+// before saving password to the collection, we need to hash it
 
 
 export function getUsers(req, res) { 
@@ -14,13 +16,16 @@ export function getUsers(req, res) {
 // create a user
 export function saveUsers(req, res){
 
+    // hashing the password
+    const hashedPassword = bcrypt.hashSync(req.body.Password, 10);
+
     const user = new Users(
         {
             FirstName: req.body.FirstName,
             LastName: req.body.LastName, 
             UserName: req.body.UserName,
             Email: req.body.Email,
-            Password: req.body.Password,
+            Password: hashedPassword,
             role: req.body.role,
         }
     );
