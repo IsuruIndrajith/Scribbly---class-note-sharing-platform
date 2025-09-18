@@ -7,69 +7,33 @@ import multer from "multer";
 import dotenv from "dotenv";
 import uploadRouter from "./routes/uploadRouter.js";
 import downloadRouter from "./routes/downloadRouter.js";
+import { authenticate } from "./auth/authMiddleware.js";
 
+dotenv.config();
 const app = express();
 
 
 app.use(bodyParser.json());
 
+// Public routes
+// connecting to usersRouter
+app.use("/Register", usersRouter)
 
 
+
+// Protected routes
+app.use("/api",authenticate, uploadRouter);
+// /api/upload gen upload kranna
+
+app.use("/api", authenticate, downloadRouter);
+// /api/download gen download kranna
+
+// connecting to the mongodb
 mongoose.connect("mongodb+srv://admin:12345@cluster0.irpqghg.mongodb.net/?retryWrites=true&w=majority&appName=Cluster0").then(() => { 
     console.log("Connected to MongoDB database");
 }).catch(() => { 
     console.log("Failed to connect to MongoDB database");
 })
-
-// connecting to usersRouter
-app.use("/Register", usersRouter)
-
-app.use("/api", uploadRouter);
-// /api/upload gen upload kranna
-
-app.use("/api", downloadRouter);
-// /api/download gen download kranna
-
-
-// app.delete("/",
-//     (req, res) => {
-//         res.json(
-//             {message: "Delete response send"}
-//         )
-//         console.log("This is a delete request");
-//     });
-
-// app.post("/",
-//     (req, res) => { 
-        
-
-//         const user = new User(
-//             {
-//                 FirstName: req.body.FirstName,
-//                 LastName: req.body.LastName, 
-//                 UserName: req.body.UserName,
-//                 Email: req.body.Email,
-//                 Password: req.body.Password
-//             }
-//         );
-//         user.save().then(() => {
-//             res.json({
-//                 message: "User data saved successfully.",
-//                 user: user
-//             })
-//         }).catch((error) => {
-//             res.json({
-//                 message: "Failed to save user."})
-//         }); 
-        
-    
-//     }
-// )
-
-
-
-
-
 
 
 // starting the backend    
