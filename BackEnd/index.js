@@ -1,13 +1,13 @@
 import express from "express";
 import bodyParser from "body-parser";
 import mongoose from "mongoose";
-import User from "./models/Users.js";
 import usersRouter from "./routes/usersRouter.js";
 import multer from "multer";
 import dotenv from "dotenv";
 import uploadRouter from "./routes/uploadRouter.js";
 import downloadRouter from "./routes/downloadRouter.js";
 import { authenticate } from "./auth/authMiddleware.js";
+import fileRoute from "./routes/fileRoute.js";
 
 dotenv.config();
 const app = express();
@@ -27,6 +27,8 @@ app.use("/api",authenticate, uploadRouter);
 
 app.use("/api", authenticate, downloadRouter);
 // /api/download gen download kranna
+
+app.use("/api", authenticate, fileRoute);
 
 // connecting to the mongodb
 mongoose.connect("mongodb+srv://admin:12345@cluster0.irpqghg.mongodb.net/?retryWrites=true&w=majority&appName=Cluster0").then(() => { 
