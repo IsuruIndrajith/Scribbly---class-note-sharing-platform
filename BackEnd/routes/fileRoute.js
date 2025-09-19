@@ -1,5 +1,5 @@
 import express from "express";
-import { searchFiles } from "../controllers/fileManageController";
+import { searchFiles } from "../controllers/fileManageController.js";
 
 const fileRoute = express.Router();
 
