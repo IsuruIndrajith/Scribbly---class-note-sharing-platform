@@ -54,7 +54,7 @@ interface File {
 }
 
 interface NotesLibraryProps {
-  onNoteSelect: (noteId: number) => void;
+  onNoteSelect: (noteId: string) => void;
   searchFiles: (query: string) => Promise<File[]>;
   getAllFiles: () => Promise<File[]>;
   downloadFile: (fileId: string, filename: string) => Promise<void>;
@@ -412,7 +412,7 @@ export function NotesLibrary({ onNoteSelect, searchFiles, getAllFiles, downloadF
           <Card 
             key={note.id} 
             className="cursor-pointer hover:shadow-md transition-shadow"
-            onClick={() => onNoteSelect(note.id)}
+            onClick={() => onNoteSelect(note.fileId)}
           >
             <CardHeader className="pb-3">
               <div className="flex items-start justify-between gap-2">

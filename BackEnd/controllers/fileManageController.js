@@ -21,3 +21,16 @@ export async function searchFiles(req, res) {
     res.status(500).json({ message: "Error searching files", error });
   }
 }
+
+export async function getFileById(req, res) {
+  try {
+    const { id } = req.params;
+    const file = await FileModel.findById(id);
+    if (!file) {
+      return res.status(404).json({ message: "File not found" });
+    }
+    res.status(200).json(file);
+  } catch (error) {
+    res.status(500).json({ message: "Error fetching file", error });
+  }
+}
