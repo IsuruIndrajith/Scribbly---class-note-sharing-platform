@@ -34,15 +34,29 @@ export function saveUsers(req, res){
             role: req.body.role,
         }
     );
-    user.save().then(() => {
-        res.json({
+    user.save().then((savedUser) => {
+        // Generate token for the new user
+        const token = jwt.sign({
+            email: savedUser.Email,
+            firstName: savedUser.FirstName,
+            lastName: savedUser.LastName,
+            role: savedUser.role,
+        },
+            process.env.JWT_SECRET,
+            { expiresIn: "1h" }
+        );
+        
+        res.status(201).json({
             message: "User created successfully.",
-            user: user
-        })
+            user: savedUser,
+            token: token
+        });
     }).catch((error) => {
-        res.json({
-            message: "Failed to save user."})
-    }); 
+        res.status(400).json({
+            message: "Failed to save user.",
+            error: error.message
+        });
+    });
     
 
 }
