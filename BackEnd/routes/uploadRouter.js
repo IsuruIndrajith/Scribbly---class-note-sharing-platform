@@ -14,11 +14,12 @@ const upload = multer({
         fileSize: 100000000 //100MB
     },
 
-    fileFilter: (req, file, cb) => {
-        if (!file.originalname.endsWith('.pdf'))
+  fileFilter: (req, file, cb) => {
+        const allowed = ['application/pdf', 'image/jpeg', 'image/png', 'image/gif'];
+        if (!allowed.includes(file.mimetype)) {
             return cb(new Error('File format is incorrect'));
+        }
         cb(undefined, true)
-        
     }
 });
 

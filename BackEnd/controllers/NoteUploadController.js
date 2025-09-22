@@ -33,9 +33,9 @@ export async function uploadFile(req, res) {
     // Process tags (convert comma-separated string to array)
     const tagsArray = tags ? tags.split(',').map(tag => tag.trim()).filter(tag => tag) : [];
 
-    // Upload to Cloudinary
+    // Upload to Cloudinary (auto-detect resource type for PDF or image)
     const result = await cloudinary.uploader.upload(path, {
-      resource_type: "raw", // required for PDFs
+      resource_type: "auto",
       public_id: `${Date.now()}_${originalname}` // Add timestamp to avoid conflicts
     });
 
