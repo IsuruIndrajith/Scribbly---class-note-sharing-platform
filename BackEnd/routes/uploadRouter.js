@@ -7,6 +7,13 @@ import { uploadFile } from "../controllers/NoteUploadController.js";
 
 const router = express.Router();
 
+// Ensure temp directory exists on startup (Windows-friendly)
+try {
+    fs.mkdirSync("tmp", { recursive: true });
+} catch (e) {
+    console.error("Failed to ensure tmp directory:", e);
+}
+
 // Store file temporarily in local /tmp folder
 const upload = multer({
     dest: "tmp/",
@@ -14,7 +21,7 @@ const upload = multer({
         fileSize: 100000000 //100MB
     },
 
-  fileFilter: (req, file, cb) => {
+    fileFilter: (req, file, cb) => {
         const allowed = ['application/pdf', 'image/jpeg', 'image/png', 'image/gif'];
         if (!allowed.includes(file.mimetype)) {
             return cb(new Error('File format is incorrect'));

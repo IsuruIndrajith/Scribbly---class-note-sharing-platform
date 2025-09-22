@@ -19,6 +19,17 @@ interface User {
   year: string;
 }
 
+function normalizeUser(u: any): User {
+  return {
+    id: u?._id || u?.id || '',
+    firstName: u?.firstName || u?.FirstName || '',
+    lastName: u?.lastName || u?.LastName || '',
+    email: u?.email || u?.Email || '',
+    university: u?.university || u?.University || '',
+    year: u?.year || u?.Year || ''
+  };
+}
+
 export default function App() {
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [user, setUser] = useState<User | null>(null);
@@ -29,12 +40,30 @@ export default function App() {
 
   // Check for existing session on app load
   useEffect(() => {
-    const checkAuthStatus = () => {
+    const checkAuthStatus = async () => {
       const storedUser = localStorage.getItem('scribbly_user');
       const authToken = localStorage.getItem('scribbly_auth_token');
       
+      if (authToken) {
+        try {
+          const res = await fetch(`${API_BASE}/api/me`, {
+            headers: { Authorization: `Bearer ${authToken}` }
+          });
+          if (res.ok) {
+            const data = await res.json();
+            const norm = normalizeUser(data.user || data);
+            setUser(norm);
+            localStorage.setItem('scribbly_user', JSON.stringify(norm));
+            setIsAuthenticated(true);
+            setIsLoading(false);
+            return;
+          }
+        } catch {}
+      }
       if (storedUser && authToken) {
-        setUser(JSON.parse(storedUser));
+        const parsed = JSON.parse(storedUser);
+        const normalized = normalizeUser(parsed);
+        setUser(normalized);
         setIsAuthenticated(true);
       }
       setIsLoading(false);
@@ -48,7 +77,7 @@ const API_BASE = "http://localhost:3000";
   
 
 
-// Sign up
+// Sign up (match backend field names)
 const handleSignUp = async (userData: {
   firstName: string;
   lastName: string;
@@ -57,17 +86,31 @@ const handleSignUp = async (userData: {
   university: string;
   year: string;
 }) => {
+  const payload = {
+    FirstName: userData.firstName,
+    LastName: userData.lastName,
+    UserName: `${userData.firstName}.${userData.lastName}`,
+    Email: userData.email,
+    Password: userData.password,
+    role: 'user',
+    University: userData.university,
+    Year: userData.year,
+  };
+
   const res = await fetch(`${API_BASE}/Register/users/new`, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
-    body: JSON.stringify(userData)
+    body: JSON.stringify(payload)
   });
 
-  if (!res.ok) throw new Error("Sign-up failed");
-  const { user, token } = await res.json(); // make sure controller returns this
-  localStorage.setItem("scribbly_user", JSON.stringify(user));
+  const data = await res.json().catch(() => ({}));
+  if (!res.ok) throw new Error(data?.message || "Sign-up failed");
+
+  const { user, token } = data;
+  const norm = normalizeUser(user);
+  localStorage.setItem("scribbly_user", JSON.stringify(norm));
   localStorage.setItem("scribbly_auth_token", token);
-  setUser(user);
+  setUser(norm);
   setIsAuthenticated(true);
 };
 
@@ -75,15 +118,27 @@ const handleLogin = async (email: string, password: string) => {
   const res = await fetch(`${API_BASE}/Register/users/login`, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ email, password })
+    body: JSON.stringify({ Email: email, Password: password })
   });
 
-  if (!res.ok) throw new Error("Login failed");
-  const { user, token } = await res.json();
-  localStorage.setItem("scribbly_user", JSON.stringify(user));
+  const data = await res.json().catch(() => ({}));
+  if (!res.ok) throw new Error(data?.message || "Login failed");
+  const { user, token } = data;
+  const norm = normalizeUser(user);
+  localStorage.setItem("scribbly_user", JSON.stringify(norm));
   localStorage.setItem("scribbly_auth_token", token);
-  setUser(user);
+  setUser(norm);
   setIsAuthenticated(true);
+  // Refresh from server to ensure latest persisted fields
+  try {
+    const resMe = await fetch(`${API_BASE}/api/me`, { headers: { Authorization: `Bearer ${token}` } });
+    if (resMe.ok) {
+      const dataMe = await resMe.json();
+      const normMe = normalizeUser(dataMe.user || dataMe);
+      setUser(normMe);
+      localStorage.setItem("scribbly_user", JSON.stringify(normMe));
+    }
+  } catch {}
 };
 
 
@@ -115,8 +170,10 @@ const uploadNote = async (
     body: formData
   });
 
-  if (!res.ok) throw new Error("Upload failed");
-  return await res.json();
+  let data: any = null;
+  try { data = await res.json(); } catch {}
+  if (!res.ok) throw new Error(data?.message || data?.error || "Upload failed");
+  return data;
 };
 
 
@@ -171,6 +228,21 @@ const downloadFile = async (fileId: string, filename: string): Promise<void> => 
   window.URL.revokeObjectURL(url);
 };
 
+// Get recent files for Dashboard
+const getRecentFiles = async (limit = 5): Promise<any[]> => {
+  const token = localStorage.getItem("scribbly_auth_token");
+  const params = new URLSearchParams({ limit: String(limit) });
+  let res = await fetch(`${API_BASE}/api/files/recent?${params.toString()}`, {
+    headers: { Authorization: `Bearer ${token || ""}` }
+  });
+  if (res.status === 401 || res.status === 403) {
+    // Fallback to public endpoint if auth fails
+    res = await fetch(`${API_BASE}/public/files/recent?${params.toString()}`);
+  }
+  if (!res.ok) throw new Error("Failed to fetch recent files");
+  return await res.json();
+};
+
 
   const handleLogout = () => {
     localStorage.removeItem('scribbly_user');
@@ -199,7 +271,7 @@ const downloadFile = async (fileId: string, filename: string): Promise<void> => 
   const renderContent = () => {
     switch (activeTab) {
       case 'dashboard':
-        return <Dashboard onNavigate={handleTabChange} user={user} />;
+        return <Dashboard onNavigate={handleTabChange} user={user} getRecentFiles={getRecentFiles} />;
       case 'library':
         return (
           <NotesLibrary 
