@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from './ui/card';
 import { Button } from './ui/button';
 import { Badge } from './ui/badge';
@@ -17,7 +17,8 @@ import {
   ArrowLeft,
   Eye,
   BookmarkPlus,
-  Send
+  Send,
+  AlertCircle
 } from 'lucide-react';
 
 interface User {
@@ -29,36 +30,86 @@ interface User {
   year: string;
 }
 
-interface NoteDetailProps {
-  noteId: number;
-  onBack: () => void;
-  user: User | null;
+interface File {
+  _id: string;
+  filename: string;
+  originalName?: string;
+  url: string;
+  size: number;
+  fileType?: string;
+  title?: string;
+  subject?: string;
+  semester?: string;
+  description?: string;
+  tags?: string[];
+  uploaderId?: string;
+  uploaderName?: string;
+  uploaderEmail?: string;
+  downloads?: number;
+  likes?: number;
+  views?: number;
+  uploadedAt: string;
+  updatedAt?: string;
 }
 
-export function NoteDetail({ noteId, onBack, user }: NoteDetailProps) {
+interface NoteDetailProps {
+  noteId: string;
+  onBack: () => void;
+  user: User | null;
+  downloadFile: (fileId: string, filename: string) => Promise<void>;
+  getFileById: (fileId: string) => Promise<File>;
+}
+
+export function NoteDetail({ noteId, onBack, user, downloadFile, getFileById }: NoteDetailProps) {
   const [isLiked, setIsLiked] = useState(false);
   const [isBookmarked, setIsBookmarked] = useState(false);
   const [newComment, setNewComment] = useState('');
+  const [file, setFile] = useState<File | null>(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
 
-  // Mock note data - in a real app, this would be fetched based on noteId
-  const note = {
-    id: 1,
-    title: "Linear Algebra - Eigenvalues and Eigenvectors",
-    subject: "MATH 2315",
-    semester: "Fall 2024",
-    uploader: "Sarah Chen",
-    uploaderAvatar: "SC",
-    uploadDate: "2024-12-15",
-    downloads: 24,
-    likes: 12,
-    views: 156,
-    comments: 5,
-    fileType: "PDF",
-    fileSize: "2.4 MB",
-    description: "Comprehensive notes covering eigenvalues, eigenvectors, and their applications in linear transformations. Includes solved examples and practice problems from chapters 5-6.",
-    tags: ["eigenvalues", "eigenvectors", "linear algebra", "midterm", "examples"],
-    previewUrl: "/api/preview/note-1.pdf" // Mock preview URL
-  };
+  // Fetch file details when component mounts or noteId changes
+  useEffect(() => {
+    const fetchFile = async () => {
+      try {
+        setLoading(true);
+        setError(null);
+        const fileData = await getFileById(noteId);
+        setFile(fileData);
+        console.log('Loaded file details:', fileData);
+      } catch (err) {
+        setError('Failed to load file details: ' + (err as Error).message);
+        console.error('Error loading file:', err);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    if (noteId) {
+      fetchFile();
+    }
+  }, [noteId, getFileById]);
+
+  // Transform file data for display
+  const note = file ? {
+    id: file._id,
+    title: file.title || file.originalName || file.filename,
+    subject: file.subject || "Unknown Subject",
+    semester: file.semester || "Unknown Semester",
+    uploader: file.uploaderName || "Anonymous",
+    uploaderAvatar: file.uploaderName ? file.uploaderName.split(' ').map(n => n[0]).join('').toUpperCase() : "AN",
+    uploadDate: file.uploadedAt,
+    downloads: file.downloads || 0,
+    likes: file.likes || 0,
+    views: file.views || 0,
+    comments: 0, // We don't have comments system yet
+    fileType: file.fileType || (file.filename?.toLowerCase().endsWith('.pdf') ? 'PDF' : 'Image'),
+    fileSize: `${(file.size / 1024 / 1024).toFixed(2)} MB`,
+    description: file.description || "No description provided.",
+    tags: file.tags || [],
+    previewUrl: file.url,
+    filename: file.originalName || file.filename
+  } : null;
 
   const comments = [
     {
@@ -92,9 +143,15 @@ export function NoteDetail({ noteId, onBack, user }: NoteDetailProps) {
     setIsBookmarked(!isBookmarked);
   };
 
-  const handleDownload = () => {
-    // Mock download functionality
-    console.log('Downloading note:', note.title);
+  const handleDownload = async () => {
+    if (file) {
+      try {
+        await downloadFile(file._id, file.originalName || file.filename);
+      } catch (error) {
+        console.error('Download failed:', error);
+        alert('Download failed: ' + (error as Error).message);
+      }
+    }
   };
 
   const handleShare = () => {
@@ -108,6 +165,44 @@ export function NoteDetail({ noteId, onBack, user }: NoteDetailProps) {
       setNewComment('');
     }
   };
+
+  // Show loading state
+  if (loading) {
+    return (
+      <div className="max-w-4xl mx-auto space-y-6">
+        <Button variant="ghost" onClick={onBack} className="mb-4">
+          <ArrowLeft className="size-4 mr-2" />
+          Back to Library
+        </Button>
+        <div className="flex items-center justify-center py-12">
+          <div className="text-center">
+            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary mx-auto mb-4"></div>
+            <p className="text-muted-foreground">Loading file details...</p>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  // Show error state
+  if (error || !note) {
+    return (
+      <div className="max-w-4xl mx-auto space-y-6">
+        <Button variant="ghost" onClick={onBack} className="mb-4">
+          <ArrowLeft className="size-4 mr-2" />
+          Back to Library
+        </Button>
+        <div className="flex items-center justify-center py-12">
+          <div className="text-center">
+            <AlertCircle className="size-12 text-destructive mx-auto mb-4" />
+            <h3 className="text-lg mb-2">Error Loading File</h3>
+            <p className="text-muted-foreground mb-4">{error || 'File not found'}</p>
+            <Button onClick={onBack}>Go Back</Button>
+          </div>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="max-w-4xl mx-auto space-y-6">
@@ -233,14 +328,20 @@ export function NoteDetail({ noteId, onBack, user }: NoteDetailProps) {
         <CardContent>
           <div className="border-2 border-dashed border-gray-300 rounded-lg p-8 text-center bg-gray-50">
             <FileText className="size-16 text-muted-foreground mx-auto mb-4" />
-            <h3 className="text-lg mb-2">PDF Preview</h3>
+            <h3 className="text-lg mb-2">{note.fileType} File</h3>
             <p className="text-muted-foreground mb-4">
-              {note.title} - Page 1 of 15
+              {note.filename} • {note.fileSize}
             </p>
-            <Button variant="outline">
-              <Eye className="size-4 mr-2" />
-              View Full Document
-            </Button>
+            <div className="flex gap-2 justify-center">
+              <Button variant="outline" onClick={() => window.open(note.previewUrl, '_blank')}>
+                <Eye className="size-4 mr-2" />
+                View Full Document
+              </Button>
+              <Button onClick={handleDownload}>
+                <Download className="size-4 mr-2" />
+                Download
+              </Button>
+            </div>
           </div>
         </CardContent>
       </Card>

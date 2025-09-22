@@ -24,7 +24,7 @@ export default function App() {
   const [user, setUser] = useState<User | null>(null);
   const [authMode, setAuthMode] = useState<'login' | 'signup'>('login');
   const [activeTab, setActiveTab] = useState('dashboard');
-  const [selectedNoteId, setSelectedNoteId] = useState<number | null>(null);
+  const [selectedNoteId, setSelectedNoteId] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(true);
 
   // Check for existing session on app load
@@ -247,6 +247,29 @@ const getAllFiles = async () => {
   }
 };
 
+// Get file by ID function
+const getFileById = async (fileId: string) => {
+  try {
+    const token = localStorage.getItem("scribbly_auth_token");
+    
+    // First try to find the file in our local files array
+    // This avoids an extra API call if we already have the data
+    const allFiles = await getAllFiles();
+    const file = allFiles.find(f => f._id === fileId);
+    
+    if (file) {
+      return file;
+    }
+    
+    // If not found locally, make an API call (we'd need to implement this endpoint)
+    // For now, return null if not found
+    throw new Error('File not found');
+  } catch (error) {
+    console.error('Get file by ID error:', error);
+    throw error;
+  }
+};
+
 // Download file function
 const downloadFile = async (fileId: string, filename: string) => {
   try {
@@ -284,7 +307,7 @@ const downloadFile = async (fileId: string, filename: string) => {
     setSelectedNoteId(null); // Reset note selection when changing tabs
   };
 
-  const handleNoteSelect = (noteId: number) => {
+  const handleNoteSelect = (noteId: string) => {
     setSelectedNoteId(noteId);
     setActiveTab('note-detail');
   };
@@ -304,7 +327,7 @@ const downloadFile = async (fileId: string, filename: string) => {
         return <UploadNotes user={user} uploadNote={uploadNote} />;
       case 'note-detail':
         return selectedNoteId ? (
-          <NoteDetail noteId={selectedNoteId} onBack={handleBackFromNote} user={user} downloadFile={downloadFile} />
+          <NoteDetail noteId={selectedNoteId} onBack={handleBackFromNote} user={user} downloadFile={downloadFile} getFileById={getFileById} />
         ) : (
           <Dashboard onNavigate={handleTabChange} user={user} />
         );
