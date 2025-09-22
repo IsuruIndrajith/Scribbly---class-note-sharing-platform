@@ -28,9 +28,16 @@ interface User {
 
 interface UploadNotesProps {
   user: User | null;
+  uploadNote: (file: File, metadata: {
+    title: string;
+    subject: string;
+    semester: string;
+    description: string;
+    tags: string;
+  }) => Promise<any>;
 }
 
-export function UploadNotes({ user }: UploadNotesProps) {
+export function UploadNotes({ user, uploadNote }: UploadNotesProps) {
   const [selectedFiles, setSelectedFiles] = useState<File[]>([]);
   const [uploading, setUploading] = useState(false);
   const [uploadProgress, setUploadProgress] = useState(0);
@@ -45,21 +52,20 @@ export function UploadNotes({ user }: UploadNotesProps) {
   });
 
   const subjects = [
-    'MATH 2315 - Linear Algebra',
-    'CHEM 3341 - Organic Chemistry',
-    'CS 2413 - Data Structures',
-    'PHYS 3321 - Quantum Physics',
-    'STAT 2301 - Statistics',
-    'BIOL 1411 - Biology I',
-    'ECON 2301 - Microeconomics',
-    'HIST 1301 - American History'
+    'HCI EC9540',
+    'AI EC9640',
+    'Computer & Network Security EC7020'
   ];
 
   const semesters = [
-    'Fall 2024',
-    'Spring 2024',
-    'Fall 2023',
-    'Spring 2023'
+    'Semester VIII',
+    'Semester VII',
+    'Semester VI',
+    'Semester V',
+    'Semester IV',
+    'Semester III',
+    'Semester II',
+    'Semester I'
   ];
 
   const handleFileSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -86,18 +92,38 @@ export function UploadNotes({ user }: UploadNotesProps) {
     setUploading(true);
     setUploadProgress(0);
 
-    // Simulate upload progress
-    const interval = setInterval(() => {
-      setUploadProgress(prev => {
-        if (prev >= 100) {
-          clearInterval(interval);
-          setUploading(false);
-          setUploadComplete(true);
-          return 100;
-        }
-        return prev + 10;
-      });
-    }, 200);
+    try {
+      // Prepare metadata object
+      const metadata = {
+        title: formData.title,
+        subject: formData.subject,
+        semester: formData.semester,
+        description: formData.description,
+        tags: formData.tags
+      };
+      
+      // Upload files one by one
+      for (let i = 0; i < selectedFiles.length; i++) {
+        const file = selectedFiles[i];
+        setUploadProgress((i / selectedFiles.length) * 100);
+        
+        // For multiple files, append file index to title
+        const fileMetadata = selectedFiles.length > 1 
+          ? { ...metadata, title: `${metadata.title} (File ${i + 1})` }
+          : metadata;
+        
+        await uploadNote(file, fileMetadata);
+      }
+      
+      setUploadProgress(100);
+      setUploading(false);
+      setUploadComplete(true);
+    } catch (error) {
+      console.error('Upload failed:', error);
+      setUploading(false);
+      // TODO: Show error message to user
+      alert('Upload failed: ' + (error as Error).message);
+    }
   };
 
   const resetForm = () => {

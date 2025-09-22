@@ -11,6 +11,7 @@ interface SignUpProps {
   onSignUp: (userData: {
     firstName: string;
     lastName: string;
+    userName: string;
     email: string;
     password: string;
     university: string;
@@ -23,6 +24,7 @@ export function SignUp({ onSignUp, onSwitchToLogin }: SignUpProps) {
   const [formData, setFormData] = useState({
     firstName: '',
     lastName: '',
+    userName: '',
     email: '',
     password: '',
     confirmPassword: '',
@@ -40,13 +42,20 @@ export function SignUp({ onSignUp, onSwitchToLogin }: SignUpProps) {
   });
 
   const universities = [
-    'Stanford University',
-    'Harvard University',
-    'MIT',
-    'UC Berkeley',
-    'UCLA',
-    'University of Michigan',
-    'Northwestern University',
+    'University of Jaffna',
+    'University of Ruhuna',
+    'University of Colombo',
+    'University of Peradeniya',
+    'University of Moratuwa',
+    'University of Sri Jayewardenepura',
+    'University of Kelaniya',
+    'Uva Wellassa University',
+    'Rajarata University of Sri Lanka',
+    'Sabaragamuwa University of Sri Lanka',
+    'Eastern University, Sri Lanka',
+    'South Eastern University of Sri Lanka',
+    'Wayamba University of Sri Lanka',
+    'Open University of Sri Lanka',
     'Other'
   ];
 
@@ -81,6 +90,7 @@ export function SignUp({ onSignUp, onSwitchToLogin }: SignUpProps) {
   const isFormValid = 
     formData.firstName && 
     formData.lastName && 
+    formData.userName &&
     formData.email && 
     isPasswordValid && 
     passwordsMatch && 
@@ -99,6 +109,7 @@ export function SignUp({ onSignUp, onSwitchToLogin }: SignUpProps) {
     onSignUp({
       firstName: formData.firstName,
       lastName: formData.lastName,
+      userName: formData.userName,
       email: formData.email,
       password: formData.password,
       university: formData.university,
@@ -155,6 +166,21 @@ export function SignUp({ onSignUp, onSwitchToLogin }: SignUpProps) {
                     required
                   />
                 </div>
+              </div>
+
+              {/* Username */}
+              <div className="space-y-2">
+                <Label htmlFor="userName">Username</Label>
+                <Input
+                  id="userName"
+                  placeholder="johndoe123"
+                  value={formData.userName}
+                  onChange={(e) => handleInputChange('userName', e.target.value)}
+                  required
+                />
+                <p className="text-xs text-muted-foreground">
+                  Choose a unique username for your profile
+                </p>
               </div>
 
               {/* Email */}

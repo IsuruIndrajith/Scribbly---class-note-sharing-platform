@@ -8,10 +8,12 @@ import uploadRouter from "./routes/uploadRouter.js";
 import downloadRouter from "./routes/downloadRouter.js";
 import { authenticate } from "./auth/authMiddleware.js";
 import fileRoute from "./routes/fileRoute.js";
+import cors from "cors";
 
 dotenv.config();
 const app = express();
 
+app.use(cors({ origin: ["http://localhost:5173", "http://localhost:5174"] })); // Allow both Vite ports
 
 app.use(bodyParser.json());
 

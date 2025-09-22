@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from './ui/card';
 import { Input } from './ui/input';
 import { Button } from './ui/button';
@@ -16,21 +16,166 @@ import {
   Image as ImageIcon,
   SlidersHorizontal,
   Grid,
-  List
+  List,
+  AlertCircle
 } from 'lucide-react';
+
+interface File {
+  _id: string;
+  filename: string;
+  originalName?: string;
+  url: string;
+  size: number;
+  fileType?: string;
+  
+  // Note metadata (new schema)
+  title?: string;
+  subject?: string;
+  semester?: string;
+  description?: string;
+  tags?: string[];
+  
+  // Uploader information (new schema)
+  uploaderId?: string;
+  uploaderName?: string;
+  uploaderEmail?: string;
+  
+  // Statistics
+  downloads?: number;
+  likes?: number;
+  views?: number;
+  
+  // Timestamps
+  uploadedAt: string;
+  updatedAt?: string;
+  
+  // Legacy fields
+  userId?: string;
+}
 
 interface NotesLibraryProps {
   onNoteSelect: (noteId: number) => void;
+  searchFiles: (query: string) => Promise<File[]>;
+  getAllFiles: () => Promise<File[]>;
+  downloadFile: (fileId: string, filename: string) => Promise<void>;
 }
 
-export function NotesLibrary({ onNoteSelect }: NotesLibraryProps) {
+export function NotesLibrary({ onNoteSelect, searchFiles, getAllFiles, downloadFile }: NotesLibraryProps) {
   const [searchTerm, setSearchTerm] = useState('');
   const [viewMode, setViewMode] = useState<'grid' | 'list'>('grid');
   const [selectedSubject, setSelectedSubject] = useState('all');
   const [selectedSemester, setSelectedSemester] = useState('all');
   const [sortBy, setSortBy] = useState('recent');
+  const [files, setFiles] = useState<File[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
 
-  // Mock data
+  // Load all files on component mount
+  useEffect(() => {
+    const loadFiles = async () => {
+      try {
+        setLoading(true);
+        setError(null);
+        const allFiles = await getAllFiles();
+        setFiles(allFiles);
+      } catch (err) {
+        setError('Failed to load files: ' + (err as Error).message);
+        console.error('Error loading files:', err);
+      } finally {
+        setLoading(false);
+      }
+    };
+    
+    loadFiles();
+  }, [getAllFiles]);
+  
+  // Debug logging to see what data we're getting
+  useEffect(() => {
+    if (files.length > 0) {
+      console.log('Files loaded:', files.length);
+      console.log('Sample file structure:', files[0]);
+    }
+  }, [files]);
+
+  // Handle search
+  const handleSearch = async (term: string) => {
+    setSearchTerm(term);
+    if (term.trim() === '') {
+      // If search is empty, reload all files
+      try {
+        const allFiles = await getAllFiles();
+        setFiles(allFiles);
+      } catch (err) {
+        console.error('Error loading files:', err);
+      }
+    } else {
+      // Search for specific files
+      try {
+        const searchResults = await searchFiles(term);
+        setFiles(searchResults);
+      } catch (err) {
+        console.error('Error searching files:', err);
+      }
+    }
+  };
+
+  // Handle download
+  const handleDownload = async (file: File, e: React.MouseEvent) => {
+    e.stopPropagation(); // Prevent card click
+    try {
+      await downloadFile(file._id, file.filename);
+    } catch (err) {
+      console.error('Download error:', err);
+      alert('Download failed: ' + (err as Error).message);
+    }
+  };
+
+  // Transform files to display format
+  const transformedFiles = files.map(file => {
+    // Determine if this is a legacy file (old schema) or new file (with metadata)
+    const isLegacyFile = !file.title && !file.subject && !file.uploaderName;
+    
+    // Create a clean filename for display (remove extension)
+    const displayTitle = file.title || 
+      (file.originalName ? file.originalName.replace(/\.[^/.]+$/, '') : 
+       file.filename.replace(/\.[^/.]+$/, ''));
+    
+    // For legacy files, try to extract subject from filename
+    const extractedSubject = isLegacyFile ? 
+      file.filename.includes('MATH') ? 'MATH' :
+      file.filename.includes('CS') ? 'Computer Science' :
+      file.filename.includes('CHEM') ? 'Chemistry' :
+      file.filename.includes('PHYS') ? 'Physics' :
+      file.filename.includes('BIOL') ? 'Biology' :
+      file.filename.includes('EC') ? 'Electronic Engineering' :
+      'General' : file.subject;
+    
+    return {
+      id: file._id,
+      title: displayTitle,
+      filename: file.originalName || file.filename,
+      subject: extractedSubject || "General",
+      semester: file.semester || (isLegacyFile ? "Previous Semester" : "Unknown"),
+      uploader: file.uploaderName || (isLegacyFile ? "Previous User" : "Anonymous"),
+      uploadDate: file.uploadedAt,
+      downloads: file.downloads || 0,
+      likes: file.likes || 0,
+      comments: 0, // We don't have comments system yet
+      fileType: file.fileType || 
+        (file.filename?.toLowerCase().endsWith('.pdf') ? 'PDF' : 
+         file.filename?.toLowerCase().match(/\.(jpg|jpeg|png|gif)$/i) ? 'Image' : 'File'),
+      description: file.description || 
+        (isLegacyFile ? 
+         `Legacy file • Size: ${(file.size / 1024 / 1024).toFixed(2)} MB` :
+         `File size: ${(file.size / 1024 / 1024).toFixed(2)} MB`),
+      url: file.url,
+      fileId: file._id,
+      tags: file.tags || [],
+      isLegacy: isLegacyFile
+    };
+  });
+
+  // Mock data (keeping for fallback)
   const notes = [
     {
       id: 1,
@@ -112,17 +257,17 @@ export function NotesLibrary({ onNoteSelect }: NotesLibraryProps) {
     }
   ];
 
-  const subjects = ['MATH 2315', 'CHEM 3341', 'CS 2413', 'PHYS 3321', 'STAT 2301', 'BIOL 1411'];
-  const semesters = ['Fall 2024', 'Spring 2024', 'Fall 2023'];
+  const subjects = ['HCI EC9540', 'AI EC9640', 'Computer & Network Security EC7020'];
+  const semesters = ['Semester VIII', 'Semester VII', 'Semester VI', 'Semester V', 'Semester IV', 'Semester III', 'Semester II', 'Semester I'];
 
-  const filteredNotes = notes.filter(note => {
-    const matchesSearch = note.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                         note.subject.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                         note.uploader.toLowerCase().includes(searchTerm.toLowerCase());
+  // Use transformed files instead of mock data
+  const displayFiles = transformedFiles;
+  
+  const filteredNotes = displayFiles.filter(note => {
     const matchesSubject = selectedSubject === 'all' || note.subject === selectedSubject;
     const matchesSemester = selectedSemester === 'all' || note.semester === selectedSemester;
     
-    return matchesSearch && matchesSubject && matchesSemester;
+    return matchesSubject && matchesSemester;
   });
 
   const sortedNotes = [...filteredNotes].sort((a, b) => {
@@ -146,7 +291,7 @@ export function NotesLibrary({ onNoteSelect }: NotesLibraryProps) {
       <div>
         <h1 className="text-3xl">Notes Library</h1>
         <p className="text-muted-foreground mt-1">
-          Browse and search through {notes.length} shared notes
+          {loading ? 'Loading files...' : `Browse and search through ${files.length} shared files`}
         </p>
       </div>
 
@@ -158,10 +303,10 @@ export function NotesLibrary({ onNoteSelect }: NotesLibraryProps) {
             <div className="relative">
               <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground size-4" />
               <Input 
-                placeholder="Search by title, subject, or uploader..." 
+                placeholder="Search by filename..." 
                 className="pl-10"
                 value={searchTerm}
-                onChange={(e) => setSearchTerm(e.target.value)}
+                onChange={(e) => handleSearch(e.target.value)}
               />
             </div>
 
@@ -229,12 +374,40 @@ export function NotesLibrary({ onNoteSelect }: NotesLibraryProps) {
       {/* Results Count */}
       <div className="flex items-center justify-between">
         <p className="text-sm text-muted-foreground">
-          Showing {sortedNotes.length} of {notes.length} notes
+          Showing {sortedNotes.length} of {files.length} files
         </p>
       </div>
 
+      {/* Error State */}
+      {error && (
+        <Card>
+          <CardContent className="p-8 text-center">
+            <AlertCircle className="size-12 text-destructive mx-auto mb-4" />
+            <h3 className="text-lg mb-2">Error Loading Files</h3>
+            <p className="text-muted-foreground">{error}</p>
+            <Button 
+              className="mt-4"
+              onClick={() => window.location.reload()}
+            >
+              Retry
+            </Button>
+          </CardContent>
+        </Card>
+      )}
+      
+      {/* Loading State */}
+      {loading && (
+        <Card>
+          <CardContent className="p-8 text-center">
+            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary mx-auto mb-4"></div>
+            <p className="text-muted-foreground">Loading files...</p>
+          </CardContent>
+        </Card>
+      )}
+      
       {/* Notes Grid/List */}
-      <div className={viewMode === 'grid' ? 'grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4' : 'space-y-4'}>
+      {!loading && !error && (
+        <div className={viewMode === 'grid' ? 'grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4' : 'space-y-4'}>
         {sortedNotes.map((note) => (
           <Card 
             key={note.id} 
@@ -252,6 +425,11 @@ export function NotesLibrary({ onNoteSelect }: NotesLibraryProps) {
                     <Badge variant="outline" className="text-xs">
                       {note.fileType}
                     </Badge>
+                    {note.isLegacy && (
+                      <Badge variant="outline" className="text-xs bg-yellow-50 text-yellow-700 border-yellow-200">
+                        Legacy
+                      </Badge>
+                    )}
                   </div>
                 </div>
                 <div className="text-xs text-muted-foreground">
@@ -280,26 +458,24 @@ export function NotesLibrary({ onNoteSelect }: NotesLibraryProps) {
                   {new Date(note.uploadDate).toLocaleDateString()}
                 </span>
                 <div className="flex items-center gap-3">
-                  <span className="flex items-center gap-1">
-                    <Download className="size-3" />
-                    {note.downloads}
-                  </span>
-                  <span className="flex items-center gap-1">
-                    <Heart className="size-3" />
-                    {note.likes}
-                  </span>
-                  <span className="flex items-center gap-1">
-                    <MessageCircle className="size-3" />
-                    {note.comments}
-                  </span>
+                  <Button 
+                    size="sm" 
+                    variant="outline" 
+                    className="h-6 px-2 text-xs"
+                    onClick={(e) => handleDownload(files.find(f => f._id === note.fileId)!, e)}
+                  >
+                    <Download className="size-3 mr-1" />
+                    Download
+                  </Button>
                 </div>
               </div>
             </CardContent>
           </Card>
         ))}
-      </div>
+        </div>
+      )}
 
-      {sortedNotes.length === 0 && (
+      {!loading && !error && sortedNotes.length === 0 && (
         <Card>
           <CardContent className="p-8 text-center">
             <Search className="size-12 text-muted-foreground mx-auto mb-4" />
