@@ -257,7 +257,24 @@ export function NotesLibrary({ onNoteSelect, searchFiles, getAllFiles, downloadF
     }
   ];
 
-  const subjects = ['HCI EC9540', 'AI EC9640', 'Computer & Network Security EC7020'];
+  const subjects = ['HCI EC9540',
+    'AI EC9640',
+    'Computer & Network Security EC7020',
+    'Computer Vision EC9580',
+    'Digital Image Processing EC9570',
+    'Data Mining EC9560',
+    'Machine Learning EC9550',
+    'Database Management Systems EC7030',
+    'Operating Systems EC7010',
+    'Computer Networks EC7040',
+    'Software Engineering EC7060',
+    'Compiler Design EC7080',
+    'Computer Architecture EC7090',
+    'Embedded Systems EC7100',
+    'Data Structures & Algorithms EC7035',
+    'Discrete Mathematics EC7510',
+    'Linear Algebra EC7520',
+    'Probability & Statistics EC7540', ];
   const semesters = ['Semester VIII', 'Semester VII', 'Semester VI', 'Semester V', 'Semester IV', 'Semester III', 'Semester II', 'Semester I'];
 
   // Use transformed files instead of mock data
