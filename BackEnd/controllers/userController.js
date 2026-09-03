@@ -32,6 +32,8 @@ export function saveUsers(req, res){
             Email: req.body.Email,
             Password: hashedPassword,
             role: req.body.role,
+            University: req.body.University,
+            Year: req.body.Year,
         }
     );
     user.save().then((savedUser) => {
@@ -41,6 +43,8 @@ export function saveUsers(req, res){
             firstName: savedUser.FirstName,
             lastName: savedUser.LastName,
             role: savedUser.role,
+            university: savedUser.University,
+            year: savedUser.Year,
         },
             process.env.JWT_SECRET,
             { expiresIn: "1h" }
@@ -105,15 +109,12 @@ export function loginUser(req, res) {
             firstName: user.FirstName,
             LastName: user.LastName,
             role: user.role,
+            university: user.University,
+            year: user.Year,
 
         },
             process.env.JWT_SECRET,
             { expiresIn: "1h" }
-            // password for the token
-            // "secret"
-
-            // password eken encrypt vela information tika ynva token ekata
-                    
         );
 
         res.status(200).json({
@@ -121,6 +122,22 @@ export function loginUser(req, res) {
             token: token,
             user: user
         });
+    }).catch(error => {
+        res.status(500).json({ error: error.message });
+    });
+}
+
+export function currentUser(req, res) {
+    // req.user is set by auth middleware (contains email)
+    const email = req.user?.email;
+    if (!email) {
+        return res.status(401).json({ message: "Unauthorized" });
+    }
+    Users.findOne({ Email: email }).then((user) => {
+        if (!user) {
+            return res.status(404).json({ message: "User not found" });
+        }
+        res.status(200).json({ user });
     }).catch(error => {
         res.status(500).json({ error: error.message });
     });

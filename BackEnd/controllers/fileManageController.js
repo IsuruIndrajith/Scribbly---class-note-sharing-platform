@@ -34,3 +34,13 @@ export async function getFileById(req, res) {
     res.status(500).json({ message: "Error fetching file", error });
   }
 }
+
+export async function getRecentFiles(req, res) {
+  try {
+    const limit = Math.max(1, Math.min(parseInt(req.query.limit) || 5, 20));
+    const files = await FileModel.find({}).sort({ uploadedAt: -1 }).limit(limit);
+    res.status(200).json(files);
+  } catch (error) {
+    res.status(500).json({ message: "Error fetching recent files", error });
+  }
+}

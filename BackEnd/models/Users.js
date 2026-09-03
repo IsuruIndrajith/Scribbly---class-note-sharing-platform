@@ -12,6 +12,8 @@ const UserDataSchema = mongoose.Schema(
                 Password: { type: String, required: true },
                 role: { type: String, required: true, default: "user" },
                 isBlocked: { type: Boolean, required: true, default: false },
+                University: { type: String, required: false },
+                Year: { type: String, required: false },
                 img: {
                     type: String,
                     required: true,

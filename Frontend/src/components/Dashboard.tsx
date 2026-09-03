@@ -1,3 +1,4 @@
+import { useEffect, useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from './ui/card';
 import { Button } from './ui/button';
 import { Badge } from './ui/badge';
@@ -11,7 +12,8 @@ import {
   Calendar,
   User,
   TrendingUp,
-  Clock
+  Clock,
+  FileText
 } from 'lucide-react';
 
 interface User {
@@ -23,54 +25,86 @@ interface User {
   year: string;
 }
 
+interface FileItem {
+  _id: string;
+  filename: string;
+  originalName?: string;
+  url: string;
+  size: number;
+  fileType?: string;
+  title?: string;
+  subject?: string;
+  semester?: string;
+  description?: string;
+  tags?: string[];
+  uploaderName?: string;
+  uploadedAt: string;
+  downloads?: number;
+  likes?: number;
+}
+
 interface DashboardProps {
   onNavigate: (tab: string) => void;
   user: User | null;
+  getRecentFiles: (limit?: number) => Promise<FileItem[]>;
 }
 
-export function Dashboard({ onNavigate, user }: DashboardProps) {
-  // Mock data for demonstration
-  const recentNotes = [
-    {
-      id: 1,
-      title: "Linear Algebra - Eigenvalues and Eigenvectors",
-      subject: "MATH 2315",
-      uploader: "Sarah Chen",
-      uploadDate: "2 hours ago",
-      downloads: 24,
-      likes: 12,
-      comments: 5,
-      fileType: "PDF"
-    },
-    {
-      id: 2,
-      title: "Organic Chemistry - Reaction Mechanisms",
-      subject: "CHEM 3341",
-      uploader: "Alex Rodriguez",
-      uploadDate: "5 hours ago",
-      downloads: 18,
-      likes: 9,
-      comments: 3,
-      fileType: "PDF"
-    },
-    {
-      id: 3,
-      title: "Data Structures - Binary Trees Notes",
-      subject: "CS 2413",
-      uploader: "Emma Thompson",
-      uploadDate: "1 day ago",
-      downloads: 31,
-      likes: 15,
-      comments: 8,
-      fileType: "PDF"
-    }
-  ];
+function timeAgo(dateStr: string) {
+  const date = new Date(dateStr);
+  const diffMs = Date.now() - date.getTime();
+  const sec = Math.floor(diffMs / 1000);
+  const min = Math.floor(sec / 60);
+  const hr = Math.floor(min / 60);
+  const day = Math.floor(hr / 24);
+  if (day > 0) return `${day} day${day > 1 ? 's' : ''} ago`;
+  if (hr > 0) return `${hr} hour${hr > 1 ? 's' : ''} ago`;
+  if (min > 0) return `${min} minute${min > 1 ? 's' : ''} ago`;
+  return 'just now';
+}
+
+export function Dashboard({ onNavigate, user, getRecentFiles }: DashboardProps) {
+  const [recentNotes, setRecentNotes] = useState<Array<{
+    id: string;
+    title: string;
+    subject: string;
+    uploader: string;
+    uploadDate: string;
+    downloads: number;
+    likes: number;
+    comments: number;
+    fileType: string;
+    url: string;
+  }>>([]);
+
+  useEffect(() => {
+    const loadRecent = async () => {
+      try {
+        const files = await getRecentFiles(5);
+        const mapped = files.map(f => ({
+          id: f._id,
+          title: f.title || f.originalName || f.filename,
+          subject: f.subject || 'General',
+          uploader: f.uploaderName || 'Anonymous',
+          uploadDate: timeAgo(f.uploadedAt),
+          downloads: f.downloads || 0,
+          likes: f.likes || 0,
+          comments: 0,
+          fileType: f.fileType || (f.filename?.toLowerCase().endsWith('.pdf') ? 'PDF' : 'File'),
+          url: f.url
+        }));
+        setRecentNotes(mapped);
+      } catch (e) {
+        console.error('Failed to load recent files:', e);
+      }
+    };
+    loadRecent();
+  }, [getRecentFiles]);
 
   const stats = [
-    { label: "Notes Uploaded", value: "12", icon: Upload, color: "text-blue-600" },
-    { label: "Total Downloads", value: "348", icon: Download, color: "text-green-600" },
-    { label: "Bookmarks", value: "26", icon: Heart, color: "text-red-600" },
-    { label: "Comments", value: "45", icon: MessageCircle, color: "text-purple-600" }
+    { label: "Notes Uploaded", value: String(recentNotes.length), icon: Upload, color: "text-blue-600" },
+    { label: "Total Downloads", value: String(recentNotes.reduce((a, n) => a + n.downloads, 0)), icon: Download, color: "text-green-600" },
+    { label: "Bookmarks", value: "0", icon: Heart, color: "text-red-600" },
+    { label: "Comments", value: String(recentNotes.reduce((a, n) => a + n.comments, 0)), icon: MessageCircle, color: "text-purple-600" }
   ];
 
   return (
@@ -159,10 +193,16 @@ export function Dashboard({ onNavigate, user }: DashboardProps) {
         <CardContent>
           <div className="space-y-4">
             {recentNotes.map((note) => (
-              <div key={note.id} className="flex items-start gap-4 p-4 border rounded-lg hover:bg-gray-50 transition-colors cursor-pointer">
-                <Avatar className="w-10 h-10">
-                  <AvatarFallback>{note.uploader.split(' ').map(n => n[0]).join('')}</AvatarFallback>
-                </Avatar>
+              <div key={note.id} className="flex items-start gap-4 p-4 border rounded-lg hover:bg-gray-50 transition-colors cursor-pointer" onClick={() => onNavigate('library')}>
+                <div className="w-28 h-20 shrink-0 rounded-md overflow-hidden bg-muted flex items-center justify-center">
+                  {note.fileType === 'Image' ? (
+                    <img src={note.url} alt={note.title} className="w-full h-full object-cover" />
+                  ) : (
+                    <div className="flex items-center justify-center w-full h-full text-muted-foreground">
+                      <FileText className="size-8" />
+                    </div>
+                  )}
+                </div>
                 
                 <div className="flex-1 min-w-0">
                   <div className="flex items-start justify-between gap-2">

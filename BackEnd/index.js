@@ -8,7 +8,9 @@ import uploadRouter from "./routes/uploadRouter.js";
 import downloadRouter from "./routes/downloadRouter.js";
 import { authenticate } from "./auth/authMiddleware.js";
 import fileRoute from "./routes/fileRoute.js";
+import publicFileRoute from "./routes/publicFileRoute.js";
 import cors from "cors";
+import { currentUser } from "./controllers/userController.js";
 
 dotenv.config();
 const app = express();
@@ -23,6 +25,9 @@ app.use("/Register", usersRouter)
 
 
 
+// Public routes (no auth)
+app.use("/public", publicFileRoute);
+
 // Protected routes
 app.use("/api",authenticate, uploadRouter);
 // /api/upload gen upload kranna
@@ -31,12 +36,16 @@ app.use("/api", authenticate, downloadRouter);
 // /api/download gen download kranna
 
 app.use("/api", authenticate, fileRoute);
+// Current user endpoint
+app.get("/api/me", authenticate, currentUser);
 
 // connecting to the mongodb
-mongoose.connect("mongodb+srv://admin:12345@cluster0.irpqghg.mongodb.net/?retryWrites=true&w=majority&appName=Cluster0").then(() => { 
-    console.log("Connected to MongoDB database");
-}).catch(() => { 
-    console.log("Failed to connect to MongoDB database");
+const defaultMongo = "mongodb+srv://admin:12345@cluster0.irpqghg.mongodb.net/?retryWrites=true&w=majority&appName=Cluster0";
+const mongoUrl = process.env.MONGO_URL || defaultMongo;
+mongoose.connect(mongoUrl).then(() => { 
+    console.log("Connected to MongoDB:", mongoUrl);
+}).catch((err) => { 
+    console.log("Failed to connect to MongoDB:", err?.message || "unknown error");
 })
 
 
