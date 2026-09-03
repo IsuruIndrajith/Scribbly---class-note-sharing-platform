@@ -32,6 +32,7 @@
 - [Environment Variables](#environment-variables)
 - [Folder Structure](#folder-structure)
 - [Scalability & Production Considerations](#scalability--production-considerations)
+- [Product Video](#Demo-walkthrough)
 
 ---
 
@@ -139,21 +140,21 @@ Passwords are **never stored in plaintext**. On registration, the raw password i
 const hashedPassword = bcrypt.hashSync(req.body.Password, 10);
 ```
 
-> **[5] bcrypt hash in action**
+> **bcrypt hash in action**
 >
-> *(Insert screenshot: used bcrypt to hash the password)*
+> <img width="720" height="638" alt="5  used bcrypt to hash the password" src="https://github.com/user-attachments/assets/455ac778-f0d0-4138-b55e-ecaca1f04382" />
 
 &nbsp;
 
-> **[6] Password hashed during user registration**
+> **Password hashed during user registration**
 >
-> *(Insert screenshot: password hashed in user registration)*
+> <img width="1430" height="913" alt="6  password hased in user registration" src="https://github.com/user-attachments/assets/917bb5bd-571e-4e00-9e5f-1e7b841896fd" />
 
 &nbsp;
 
-> **[7] Hashed password saved in the database**
+> **Hashed password saved in the database**
 >
-> *(Insert screenshot: hashed password saved in the database)*
+> <img width="977" height="368" alt="7  hashed password saved in the database" src="https://github.com/user-attachments/assets/1b57d653-5728-4db9-9ca2-a63841a3996a" />
 
 ---
 
@@ -169,9 +170,9 @@ const token = jwt.sign(
 );
 ```
 
-> **[9] JWT token generated with user information**
+> **JWT token generated with user information**
 >
-> *(Insert screenshot: A token is generated that contains the user's information)*
+> <img width="1427" height="909" alt="9  A token is generated that have users information" src="https://github.com/user-attachments/assets/5fefe715-49c3-4bcf-b35e-f84e7343450d" />
 
 ---
 
@@ -194,27 +195,27 @@ export function authenticate(req, res, next) {
 }
 ```
 
-> **[10] JWT authorization — protected upload route**
+> **JWT authorization — protected upload route**
 >
-> *(Insert screenshot: JWT authorization for a protected route - upload)*
+> <img width="1388" height="832" alt="10  JWT authorization for a protected route - upload" src="https://github.com/user-attachments/assets/3396502f-7cc7-4cf0-8a27-608de70e1c59" />
 
 &nbsp;
 
-> **[11] Protected download route — no token provided**
+> **Protected download route — no token provided**
 >
-> *(Insert screenshot: protected route - download without the login token)*
+> <img width="1379" height="926" alt="11  protected route - download without the login token" src="https://github.com/user-attachments/assets/db7e271c-2c59-41e6-97b2-572d906ccd15" />
 
 &nbsp;
 
-> **[12] Protected download route — valid token provided**
+> **Protected download route — valid token provided**
 >
-> *(Insert screenshot: protected route-download action, when the login token given)*
+> <img width="1438" height="962" alt="12  protected route-download action, when the login token given" src="https://github.com/user-attachments/assets/0fe4c54a-856f-4bc1-898d-3a99d3012f99" />
 
 &nbsp;
 
-> **[13] Invalid token rejection**
+> **Invalid token rejection**
 >
-> *(Insert screenshot: giving an invalid token)*
+> <img width="1380" height="958" alt="13  giving a invalid token " src="https://github.com/user-attachments/assets/df928fed-0d74-4174-bbb8-2f04a6b0950d" />
 
 ---
 
@@ -290,49 +291,54 @@ Phase 7 — Frontend Integration
 
 ### User Registration & Authentication
 
-> **[1] New user registered successfully**
+> New user registered successfully**
 >
-> *(Insert screenshot: registered new user successfully)*
+> <img width="1436" height="957" alt="1  registered new user successfully" src="https://github.com/user-attachments/assets/6f2c4949-f1bc-4a34-b179-8f6ce21d00a2" />
+
 
 &nbsp;
 
-> **[8] Login success with JWT returned**
+> **Login success with JWT returned**
 >
-> *(Insert screenshot: login user success)*
+> <img width="1434" height="951" alt="8  login user success" src="https://github.com/user-attachments/assets/e5fb49da-84c0-4c7a-b012-ad2089a6d172" />
+
 
 ---
 
 ### File Operations
 
-> **[2] File uploaded to Cloudinary successfully**
+> **File uploaded to Cloudinary successfully**
 >
-> *(Insert screenshot: File upload success)*
+> <img width="1429" height="964" alt="2  File upload success" src="https://github.com/user-attachments/assets/4145edf9-5acb-4e26-9798-2d77adc3b71c" />
+
 
 &nbsp;
 
-> **[3] Note downloaded by MongoDB ID**
+> **Note downloaded by MongoDB ID**
 >
-> *(Insert screenshot: Note download by id)*
+> <img width="1443" height="915" alt="3  Note download by id" src="https://github.com/user-attachments/assets/26368dcc-a8ed-4356-8ba6-6852c6ec724c" />
+
 
 &nbsp;
 
-> **[4] Note downloaded by filename**
+> **Note downloaded by filename**
 >
-> *(Insert screenshot: Notes download by name)*
+> <img width="1380" height="928" alt="4  Notes download by name" src="https://github.com/user-attachments/assets/4e81eb83-ee56-445a-9310-a3c79c3b48ba" />
+
 
 ---
 
 ### Search
 
-> **[14] Search returning matching files**
+> **Search returning matching files**
 >
-> *(Insert screenshot: Searching function files working properly)*
+> <img width="1386" height="913" alt="14  Searching function files working properly" src="https://github.com/user-attachments/assets/b5174abf-c193-4970-a21c-b1e11d84357d" />
 
 &nbsp;
 
-> **[15] Search endpoint — protected route confirmed**
+> **Search endpoint — protected route confirmed**
 >
-> *(Insert screenshot: Searching function protected route)*
+> <img width="1384" height="934" alt="15  Searching function protected route" src="https://github.com/user-attachments/assets/ab784d0d-013f-4668-b691-9c75e8a102bc" />
 
 ---
 
@@ -383,7 +389,6 @@ Phase 7 — Frontend Integration
 ```
 
 ---
-
 ## Getting Started
 
 ### Prerequisites
@@ -484,6 +489,11 @@ Project/
     ├── vite.config.ts
     └── package.json
 ```
+---
+
+## Demo walkthrough
+
+https://github.com/user-attachments/assets/49f8c57f-57bc-4c2d-8fb4-80bed4658f97
 
 ---
 
