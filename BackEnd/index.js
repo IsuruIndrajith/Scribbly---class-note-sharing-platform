@@ -15,7 +15,13 @@ import { currentUser } from "./controllers/userController.js";
 dotenv.config();
 const app = express();
 
-app.use(cors({ origin: ["http://localhost:5173", "http://localhost:5174"] })); // Allow both Vite ports
+app.use(cors({ 
+  origin: [
+    "http://localhost:5173", 
+    "http://localhost:5174",
+    process.env.FRONTEND_URL
+  ].filter(Boolean)
+}));
 
 app.use(bodyParser.json());
 
@@ -40,42 +46,20 @@ app.use("/api", authenticate, fileRoute);
 app.get("/api/me", authenticate, currentUser);
 
 // connecting to the mongodb
-const defaultMongo = "mongodb+srv://admin:12345@cluster0.irpqghg.mongodb.net/?retryWrites=true&w=majority&appName=Cluster0";
-const mongoUrl = process.env.MONGO_URL || defaultMongo;
+const mongoUrl = process.env.MONGO_URL;
+if (!mongoUrl) {
+  console.error("MONGO_URL environment variable is not set!");
+  process.exit(1);
+}
 mongoose.connect(mongoUrl).then(() => { 
-    console.log("Connected to MongoDB:", mongoUrl);
+    console.log("Connected to MongoDB");
 }).catch((err) => { 
     console.log("Failed to connect to MongoDB:", err?.message || "unknown error");
 })
 
 
 // starting the backend    
-app.listen(3000, () => console.log("Server is running on port 3000"));
+const PORT = process.env.PORT || 3000;
+app.listen(PORT, () => console.log(`Server is running on port ${PORT}`));
 
-
-// mongodb+srv://admin:12345@cluster0.irpqghg.mongodb.net/?retryWrites=true&w=majority&appName=Cluster0
-   // FirstName: req.body.FirstName,
-            // LastName: req.body.LastName,
-            // UserName: req.body.UserName,
-            // Email: req.body.Email,
-// Password: req.body.Password
-
-
-// using multer for file uploads
-// const upload = multer({
-//     dest: 'upload',
-//     limits: {
-//         fileSize: 100000000 // 100MB
-//     },
-//     fileFilter: (req, file, cb) => { 
-//         if (!file.originalname.endsWith('.pdf'))
-//             return cb(new Error('File format is incorrect'));
-//         cb(undefined,true)
-            
-//     }
-// })
-
-// app.post('/upload', upload.single('upload'), async (req, res) => {
-//     res.send()
-// }, (err, req, res, next) => res.status(404).send({ error: err.message }))
 
